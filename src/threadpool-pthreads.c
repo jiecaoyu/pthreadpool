@@ -1,12 +1,18 @@
 /* Standard C headers */
+#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* POSIX headers */
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
+
+#define handle_error_en(en, msg) \
+        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
 /* Platform-specific headers */
 #if defined(__linux__)
@@ -319,6 +325,19 @@ static void* thread_main(void* arg) {
 		/* Update last command */
 		last_command = command;
 	};
+}
+
+void pthreadpool_thread_affine(struct pthreadpool* threadpool) {
+        if (threadpool != NULL) {
+                for (size_t tid = 0; tid < threadpool->threads_count; tid++) {
+                        cpu_set_t cpuset;
+                        CPU_ZERO(&cpuset);
+                        CPU_SET(tid, &cpuset);
+                        int s = pthread_setaffinity_np(threadpool->threads[tid].thread_object, sizeof(cpu_set_t), &cpuset);
+                        if (s != 0) handle_error_en(s, "pthread_getaffinity_np");
+                }
+        }
+        return;
 }
 
 struct pthreadpool* pthreadpool_create(size_t threads_count) {

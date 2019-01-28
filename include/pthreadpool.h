@@ -37,6 +37,8 @@ pthreadpool_t pthreadpool_create(size_t threads_count);
  */
 size_t pthreadpool_get_threads_count(pthreadpool_t threadpool);
 
+void pthreadpool_thread_affine(struct pthreadpool* threadpool);
+
 
 /**
  * Processes items in parallel using threads from a thread pool.
